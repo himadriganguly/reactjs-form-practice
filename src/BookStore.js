@@ -136,9 +136,7 @@ class ShippingDetails extends Component{
 
   render() {
     var errorMessage = this._renderError();
-    if (this.props.formValues.fullName != null) {
-        console.log(this.props.formValues.fullName);
-    }
+    
     return (
       <div>
         <h1>Enter your shipping information.</h1>
