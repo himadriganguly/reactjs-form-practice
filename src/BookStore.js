@@ -1,11 +1,13 @@
 import React, {Component} from 'react';
+import SetIntervalComponent from './components/set_interval_component';
 
 class BookList extends Component{
   constructor(props) {
     super(props);
     this.state = {
       selectedBooks: this.props.formValues.selectedBooks != null ? this.props.formValues.selectedBooks : [],
-      error: false
+      error: false,
+      cartTimeout: this.props.cartTimeout
     };
   }
 
@@ -58,6 +60,8 @@ class BookList extends Component{
 
   render() {
     var errorMessage = this._renderError();
+    var minutes = Math.floor(this.state.cartTimeout / 60);
+    var seconds = this.state.cartTimeout - minutes * 60;
 
     return (
       <div>
@@ -67,6 +71,9 @@ class BookList extends Component{
           { this.props.books.map((book) => { return (this._renderBook(book)); })}
           <input type="submit" className="btn btn-success" />
         </form>
+        <div className="well">
+          <span className="glyphicon glyphicon-time" aria-hidden="true"></span> You have {minutes} Minutes, {seconds} Seconds, before confirming order
+        </div>
       </div>
     );
   }
@@ -80,14 +87,17 @@ BookList.defaultProps = {
       ]
 }
 
-class ShippingDetails extends Component{
+const BookListWithSetInterval = SetIntervalComponent(BookList);
+
+class ShippingDetails extends Component {
   constructor(props) {
     super(props);
     this.state = {
       error: false,
       fullName: this.props.formValues.fullName != null ? this.props.formValues.fullName : '',
       contactNumber: this.props.formValues.contactNumber != null ? this.props.formValues.contactNumber : '',
-      shippingAddress: this.props.formValues.shippingAddress != null ? this.props.formValues.shippingAddress : ''
+      shippingAddress: this.props.formValues.shippingAddress != null ? this.props.formValues.shippingAddress : '',
+      cartTimeout: this.props.cartTimeout
     };
     this.handleChange = this.handleChange.bind(this);
   }
@@ -131,12 +141,13 @@ class ShippingDetails extends Component{
     var newState = this.state;
     newState[attribute] = event.target.value;
     this.setState(newState);
-    console.log(this.state);
   }
 
   render() {
     var errorMessage = this._renderError();
-    
+    var minutes = Math.floor(this.state.cartTimeout / 60);
+    var seconds = this.state.cartTimeout - minutes * 60;
+
     return (
       <div>
         <h1>Enter your shipping information.</h1>
@@ -176,18 +187,25 @@ class ShippingDetails extends Component{
                 <button type="button" className="btn btn-success back" onClick={this.props.updateBack}>Back</button>
             </div>
           </form>
-
+        </div>
+        <div className="well">
+          <span className="glyphicon glyphicon-time" aria-hidden="true"></span> You have {minutes} Minutes, {seconds} Seconds, before confirming order
         </div>
       </div>
     );
   }
 };
 
+const ShippingDetailsWithSetInterval = SetIntervalComponent(ShippingDetails);
 
-class DeliveryDetails extends Component{
+class DeliveryDetails extends Component {
+
   constructor(props) {
     super(props);
-    this.state = {deliveryOption: 'Primary'};
+    this.state = {
+      deliveryOption: 'Primary',
+      cartTimeout: this.props.cartTimeout
+    };
   }
 
   handleChange(event) {
@@ -200,6 +218,9 @@ class DeliveryDetails extends Component{
   }
 
   render() {
+    var minutes = Math.floor(this.state.cartTimeout / 60);
+    var seconds = this.state.cartTimeout - minutes * 60;
+
     return (
       <div>
         <h1>Choose your delivery options here.</h1>
@@ -230,22 +251,36 @@ class DeliveryDetails extends Component{
             <button type="button" className="btn btn-success back" onClick={this.props.updateBack}>Back</button>
           </form>
         </div>
+        <div className="well">
+          <span className="glyphicon glyphicon-time" aria-hidden="true"></span> You have {minutes} Minutes, {seconds} Seconds, before confirming order
+        </div>
       </div>
     );
   }
 };
 
+const DeliveryDetailsWithSetInterval = SetIntervalComponent(DeliveryDetails);
 
 class BookStore extends Component {
   constructor(props) {
     super(props);
-    this.state = {currentStep: 1, formValues: {}};
+    this.state = {
+      currentStep: 1,
+      formValues: {},
+      cartTimeout: (60*15)
+    };
+  }
+
+  updateCartTimeout(timeout){
+    // console.log("Timeout: " + timeout);
+    this.setState({cartTimeout: timeout}, function () {
+        // console.log("CartTimeout: " + this.state.cartTimeout);
+    });
   }
 
   updateFormData(formData) {
     var formValues = Object.assign({}, this.state.formValues, formData);
     var nextStep = this.state.currentStep + 1;
-    console.log(formValues);
     this.setState({currentStep: nextStep, formValues: formValues});
   }
 
@@ -254,24 +289,48 @@ class BookStore extends Component {
     this.setState({currentStep: backStep})
   }
 
+  alertCartTimeout(){
+    this.setState({currentStep: 10});
+  }
+
   render() {
     switch (this.state.currentStep) {
       case 1:
-        return <BookList updateFormData={this.updateFormData.bind(this)} books={this.props.books} formValues={this.state.formValues} />;
+        return <BookListWithSetInterval updateFormData={this.updateFormData.bind(this)}
+          books={this.props.books}
+          formValues={this.state.formValues}
+          cartTimeout={this.state.cartTimeout}
+          updateCartTimeout={this.updateCartTimeout.bind(this)}
+          alertCartTimeout={this.alertCartTimeout.bind(this)} />;
       case 2:
-        return <ShippingDetails updateFormData={this.updateFormData.bind(this)} updateBack={this.updateBack.bind(this)} formValues={this.state.formValues} />;
+        return <ShippingDetailsWithSetInterval updateFormData={this.updateFormData.bind(this)}
+          updateBack={this.updateBack.bind(this)}
+          formValues={this.state.formValues}
+          cartTimeout={this.state.cartTimeout}
+          updateCartTimeout={this.updateCartTimeout.bind(this)}
+          alertCartTimeout={this.alertCartTimeout.bind(this)} />;
       case 3:
-        return <DeliveryDetails updateFormData={this.updateFormData.bind(this)} updateBack={this.updateBack.bind(this)} />;
+        return <DeliveryDetailsWithSetInterval updateFormData={this.updateFormData.bind(this)}
+          updateBack={this.updateBack.bind(this)}
+          cartTimeout={this.state.cartTimeout}
+          updateCartTimeout={this.updateCartTimeout.bind(this)}
+          alertCartTimeout={this.alertCartTimeout.bind(this)} />;
       case 4:
-        return <Confirmation data={this.state.formValues} updateFormData={this.updateFormData.bind(this)}/>;
+        return <ConfirmationWithSetInterval data={this.state.formValues}
+          updateFormData={this.updateFormData.bind(this)}
+          cartTimeout={this.state.cartTimeout}
+          updateCartTimeout={this.updateCartTimeout.bind(this)}
+          alertCartTimeout={this.alertCartTimeout.bind(this)} />;
       case 5:
         return <Success data={this.state.formValues}/>;
+      case 10:
+        /* Handle the case of Cart timeout */
+        return <div><h2>Your cart timed out, Please try again!</h2></div>;
       default:
         return <BookList updateFormData={this.updateFormData.bind(this)} />;
     }
   }
 };
-
 
 class Success extends Component{
   render() {
@@ -294,12 +353,20 @@ class Success extends Component{
 };
 
 class Confirmation extends Component{
+  constructor(props) {
+    super(props);
+    this.state = {cartTimeout: this.props.cartTimeout};
+  }
+
   handleSubmit(event) {
     event.preventDefault();
     this.props.updateFormData(this.props.data);
   }
 
   render() {
+    var minutes = Math.floor(this.state.cartTimeout / 60);
+    var seconds = this.state.cartTimeout - minutes * 60;
+
     return (
       <div>
         <h1>Are you sure you want to submit the data?</h1>
@@ -320,9 +387,14 @@ class Confirmation extends Component{
             Place order
           </button>
         </form>
+        <div className="well">
+          <span className="glyphicon glyphicon-time" aria-hidden="true"></span> You have {minutes} Minutes, {seconds} Seconds, before confirming order
+        </div>
       </div>
     );
   }
 };
+
+const ConfirmationWithSetInterval = SetIntervalComponent(Confirmation);
 
 export default BookStore;
