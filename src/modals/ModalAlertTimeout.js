@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom';
 class ModalAlertTimeout extends Component {
 
   componentDidMount(){
-    console.log(this.refs);
     setTimeout(()=> {
       let timeoutModal = ReactDOM.findDOMNode(this.refs.timeoutModal);
       $(timeoutModal).modal('show');

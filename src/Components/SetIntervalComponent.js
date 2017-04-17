@@ -1,3 +1,5 @@
+import React, {Component} from 'react';
+
 var SetInterval = function(Component) {
 
     class SetIntervalComponent extends Component {
