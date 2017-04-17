@@ -1,5 +1,7 @@
 import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
 import SetIntervalComponent from './components/set_interval_component';
+import ModalAlertTimeout from './modals/modal_alert_timeout';
 
 class BookList extends Component{
   constructor(props) {
@@ -290,7 +292,12 @@ class BookStore extends Component {
   }
 
   alertCartTimeout(){
-    this.setState({currentStep: 10});
+    ReactDOM.render(<ModalAlertTimeout />, document.getElementById('modalAlertTimeout'));
+    this.setState({
+      currentStep: 1,
+      formValues: {},
+      cartTimeout: (60*15)
+    });
   }
 
   render() {
