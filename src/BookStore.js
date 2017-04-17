@@ -25,7 +25,7 @@ class BookStore extends Component {
     this.state = {
       currentStep: 1,
       formValues: {},
-      cartTimeout: (60*1)
+      cartTimeout: (60*15)
     };
   }
 
